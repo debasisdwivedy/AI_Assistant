@@ -1,6 +1,25 @@
 import yt_dlp
 
 def read_video(url:str)->str:
+    """
+    Tool: Audio/Video reader to read audio/video files
+
+        Name : read_video
+
+        Description:
+            This tool is used to read audio/video files like (mp3,mp4,MOV etc) of different format.
+            The result return is of type string
+
+        Args:
+            url:str = The url of the video file.
+
+        Usage:
+            Call this tool if you want to get the content of a audio/video file from a URL.
+
+        Output:
+
+            result:str = The result from the function call
+    """
     __get_metadata__(url)
     #__download_video__(url)
     __download_audio__(url)
@@ -37,4 +56,4 @@ def __get_metadata__(url:str):
         print(info_dict.keys())  # Show available metadata fields
 
 
-read_video("https://www.youtube.com/watch?v=WS3ywmABNm4")
+# read_video("https://www.youtube.com/watch?v=WS3ywmABNm4")

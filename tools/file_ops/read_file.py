@@ -1,4 +1,23 @@
 def read_file(file_path:str)->str:
+    """
+    Tool: File reader to read files of any type
+
+        Name : read_file
+
+        Description:
+            This tool is used to read files of different format.
+            The result return is of type string
+
+        Args:
+            file_path:str = The name/path/url of the file to be read.
+
+        Usage:
+            Call this tool if you want to read a file present in local or a URL to the file.
+
+        Output:
+
+            result:str = The result from the function call
+    """
     filename=file_path
     if file_path.startswith("http"):
         import requests
@@ -203,4 +222,4 @@ def __load_file__(filename):
 # 1707100541036.jpeg - ISSUE (NUMPY)
 # Best_of_Bali_2023.pptx
 
-read_file("")
+# read_file("")

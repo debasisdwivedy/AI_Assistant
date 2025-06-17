@@ -1,7 +1,7 @@
 import regex
 from utils.get_llm import get_llm
 from langchain_core.prompts import PromptTemplate
-from visit_website import visit_website
+from tools.web.visit_website import visit_website
 
 
 PROMPT="""
@@ -27,7 +27,31 @@ PROMPT="""
         """
 
 
-def search(query:str,max_results:int):
+def web_search(query:str,max_results:int=20):
+    """
+    Tool: Web Search
+
+        Name : web_search
+
+        Description:
+            This tool performs a search operation for a given user query.
+            It should be invoked whenever a user makes a request, asks a question, or provides any input that requires information retrieval.
+            Always use this tool to fetch relevant information before attempting to answer the user's query.
+
+        Args:
+            query:str = The user's query or question that needs to be searched.
+
+        Usage:
+            Call this tool immediately upon receiving a user query to ensure that the LLM has the most accurate and updated context for generating a response.
+
+        Output:
+            A dictionary of results as below:
+
+            result:str = {{'0': {{'URL': 'https://example.com','Content': 'This is a sample example'}},
+                        '1': {{'URL': 'https://xyz.com','Content': 'This is a sample example'}}
+                        }}
+    
+    """
     __duck_duck_go_search__(query,max_results)
     __google__search__(query,max_results)
 
@@ -96,5 +120,5 @@ def __google__search__(query:str,max_results:int):
                 print(answer)
 
 
-query = "What was the actual enrollment count of the clinical trial on H. pylori in acne vulgaris patients from Jan-May 2018 as listed on the NIH website?"
-search(query,20)
+# query = "What was the actual enrollment count of the clinical trial on H. pylori in acne vulgaris patients from Jan-May 2018 as listed on the NIH website?"
+# search(query,20)
