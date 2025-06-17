@@ -1,6 +1,3 @@
-import sys
-sys.path.append("/Volumes/MacintoshDrive/Midships/First_agent_template/AI_Assistant")
-
 def read_file(file_path:str)->str:
     filename=file_path
     if file_path.startswith("http"):

@@ -1,5 +1,3 @@
-import sys
-sys.path.append("/Volumes/MacintoshDrive/Midships/First_agent_template/AI_Assistant")
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime

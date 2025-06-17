@@ -1,6 +1,3 @@
-import sys
-sys.path.append("/Volumes/MacintoshDrive/Midships/First_agent_template/AI_Assistant")
-
 import regex
 from utils.get_llm import get_llm
 from langchain_core.prompts import PromptTemplate
