@@ -1,2 +1,4 @@
 # AI_Assistant
-Assistant for everything
+Assistant for everything   
+
+Agents for Activities   
