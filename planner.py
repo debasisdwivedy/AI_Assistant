@@ -1,144 +1,59 @@
-from utils.get_llm import get_llm
 from langchain_core.prompts import PromptTemplate
 import json
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage, AnyMessage
 
-def get_plan(task:str)->str:
-    PROMPT="""
-            Create a detailed plan to achieve the below objective. Make it as detailed as possible with the steps and thought behind those steps.Return the PLAN as a valid JSON ONLY as mentioned below:
-            {{
-            "1": {{
-                "Step": 1,
-                "Action": "<DESCRIPTION OF THE ACTION TO BE PERFORMED>",
-                "Tool": "<TOOL_NAME>",
-                "Args": {{
-                    <TOOL_ARGS>
-                }},
-                "Reasoning": ""
-            }},
-            "2": {{
-                "Step": 2,
-                "Action": "<DESCRIPTION OF THE ACTION TO BE PERFORMED>",
-                "Tool": "<TOOL_NAME>",
-                "Args": {{
-                    <TOOL_ARGS>
-                }},
-                "Reasoning": ""
-            }}
-    }}
-            
-    The plan would be executed one step at a time. You have access to tools below:
+from utils.get_llm import get_llm
+from Prompts import Prompts
 
-    a) Tool: Web Search
-
-        Name : web_search
-
-        Description:
-            This tool performs a search operation for a given user query.
-            It should be invoked whenever a user makes a request, asks a question, or provides any input that requires information retrieval.
-            Always use this tool to fetch relevant information before attempting to answer the user's query.
-
-        Args:
-            query:str = The user's query or question that needs to be searched.
-
-        Usage:
-            Call this tool immediately upon receiving a user query to ensure that the LLM has the most accurate and updated context for generating a response.
-
-        Output:
-            A dictionary of results as below:
-
-            result:str = {{'0': {{'URL': 'https://example.com','Content': 'This is a sample example'}},
-                        '1': {{'URL': 'https://xyz.com','Content': 'This is a sample example'}}
-                        }}
-                        
-    b) Tool: Python virtual environment to execute python code
-
-        Name : python_execute
-
-        Description:
-            This tool is used to execute python code and return back the result.
-            The result could be of any datatype including Exception string.
-            ALWAYS PRINT THE FINAL RESULT.   
-
-        Args:
-            execute_code:str = The code that needs to be executed.
-            install_pkg:list = The packages that needs to be installed to run the code successfully.
-
-        Usage:
-            Call this tool upon receiving a python code and return back the result as a string.
-
-        Output:
-            
-            result:str = The result from the function call
-
-    c) Tool: File reader to read files of any type
-
-        Name : read_file
-
-        Description:
-            This tool is used to read files of different format.
-            The result return is of type string
-
-        Args:
-            file_path:str = The name/path/url of the file to be read.
-
-        Usage:
-            Call this tool if you want to read a file present in local or a URL to the file.
-
-        Output:
-
-            result:str = The result from the function call
-
-    d) Tool: Visit website to get the content
-
-        Name : visit_website
-
-        Description:
-            This tool is used to visit a website and get its content in markdown format.
-            The result return is of type string
-
-        Args:
-            url:str = The url of the site to visit.
-
-        Usage:
-            Call this tool if you need to get the content of a website.
-
-        Output:
-
-            result:str = The content of the website.
-
-    e) Tool: Audio/Video reader to read audio/video files
-
-        Name : read_video
-
-        Description:
-            This tool is used to read audio/video files like (mp3,mp4,MOV etc) of different format.
-            The result return is of type string
-
-        Args:
-            url:str = The url of the video file.
-
-        Usage:
-            Call this tool if you want to get the content of a audio/video file from a URL.
-
-        Output:
-
-            result:str = The result from the function call
-
-    Mention the tools with the arguments that would be used for each step.Each step should use ONLY ONE TOOL at a time.
-    YOUR SUCCESS DEPENDS ON THE MINIMUM NUMBER OF STEPS YOU TAKE TO ACHIEVE THE OBJECTIVE.
-    THINK STEP BY STEP AND REASON YOUR OWN LOGIC.
-
-    Objective : {question}
-            """
-
+def get_plan(task:str,messages:list)->str:
     llm = get_llm()
+    
+    if messages is None or len(messages) <= 0:
+        messages.append(SystemMessage(content=Prompts.PLANNER_PROMPT.value))
+        messages.append(HumanMessage(content=task))
 
-    prompt_template = PromptTemplate.from_template(PROMPT)
-    prompt = prompt_template.invoke(
-        {
-        #"question": {task}
-        "question": '''
+    # prompt_template = PromptTemplate.from_template(Prompts.PLANNER_PROMPT.value)
+    # prompt = prompt_template.invoke(
+    #     {
+    #     "question": {task}
+    #     }
+    # )
+    # print(prompt)
+    
+
+    resp = llm.invoke(messages)
+    content = resp.content
+
+    start = content.find("{")
+    end = content.rfind("}")
+
+    if start != -1 and end != -1 and end > start:
+        formatted_content = content[start:end+1]
+        try:
+            plan = json.loads(formatted_content)
+            return formatted_content
+        except Exception as e:
+            #raise ValueError("Unable to generate plan") from e
+            return f"'1':{'STATUS': 'NOT ABLE TO GENERATE A PLAN. GOT INVALID JSON AS RESPONSE. {e}'}"
+    else:
+        print("Invalid JSON")
+        return f"'1':{'STATUS': 'NOT ABLE TO GENERATE A PLAN. PLEASE TRY AGAIN LATER!!!'}"
+    
+
+def plan_status(task:str,plan:str)->str:
+    messages = [
+        SystemMessage(content=Prompts.PLAN_VALIDATION_PROMPT.value),
+        AIMessage(content=task),
+        AIMessage(content=plan),
+        ]
+    llm = get_llm()
+    resp = llm.invoke(messages)
+    
+    return resp.content
+
+if __name__ == "__main__":
+
+    task = '''
         Please solve the following crossword:
         
         |1|2|3|4|5|
@@ -160,46 +75,29 @@ def get_plan(task:str)->str:
         - 2 Eye procedure
         - 3 "Same here," in a three-word phrase
         - 4 Already occupied, as a seat
-        - 5 Sarcastically critical commentary. Answer by concatenating the characters you choose to fill the crossword, in row-major order.
+        - 5 Sarcastically critical commentary. 
+        Answer by concatenating the characters you choose to fill the crossword, in row-major order.
         '''
-        }
-    )
+    messages = []
+    i = 0
+    while True:
+        i += 1
+        plan_str = get_plan(task,messages)
+        #print(plan_str)
+        messages.append(AIMessage(content=plan_str))
+        plan = json.loads(plan_str)
+        
+        for step in plan:
+            print("=========================")
+            print(plan[step])
+            print("=========================")
+        
+        status = plan_status(task,plan_str)
+        print("=========VERIFICATION STATUS================")
+        print(status)
+        messages.append(AIMessage(content=status.split("\n")[1]))
 
-    resp = llm.invoke(prompt)
-    content = resp.content
+        if i > 5:
+            break
 
-    start = content.find("{")
-    end = content.rfind("}")
 
-    if start != -1 and end != -1 and end > start:
-        formatted_content = content[start:end+1]
-        try:
-            print(formatted_content)
-            plan = json.loads(formatted_content)
-            
-            for step in plan:
-                print("=========================")
-                print(plan[step])
-                print("=========================")
-
-            return formatted_content
-        except ValueError as e:
-            raise ValueError("Unable to generate plan") from e
-    else:
-        print("Invalid JSON")
-        return "{'STATUS': 'NOT ABLE TO GENERATE A PLAN. PLEASE TRY AGAIN LATER!!!'}"
-    
-
-def plan_status(plan:str)->str:
-    PROMPT="""
-        You are a plan verifier. Given below is a plan to be executed.Verify if the plan is Valid or Invalid.
-        DO NOT RESPOND WITH ANYTHING APART FROM 'failure' OR 'success'.
-        """
-    messages = [
-        SystemMessage(content=PROMPT),
-        HumanMessage(content=plan),
-        ]
-    llm = get_llm()
-    resp = llm.invoke(messages)
-    
-    return resp.content

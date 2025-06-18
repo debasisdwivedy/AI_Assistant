@@ -1,4 +1,7 @@
-def python_execute(execute_code:str,install_pkg:list)->str:
+import sys,os
+sys.path.append(os.getcwd())
+
+def python_execute(execute_code:str,install_pkg:list,verbose:bool=False)->str:
     """
     Tool: Python virtual environment to execute python code
 
@@ -26,7 +29,11 @@ def python_execute(execute_code:str,install_pkg:list)->str:
     except ImportError as e:
         raise ImportError("You must install package `docker` to run this tool: for instance run `pip install docker`.") from e
 
-    pkg = " ".join(install_pkg)
+    if install_pkg is not None and len(install_pkg)>0:
+        cmd = "&& pip install --no-cache-dir "
+        pkg = cmd + " ".join(install_pkg)
+    else:
+        pkg = ""
 
     try:
         client = docker.from_env()
@@ -46,7 +53,7 @@ def python_execute(execute_code:str,install_pkg:list)->str:
     # Create virtual environment and install packages there
     RUN python -m venv /venv \
         && . /venv/bin/activate \
-        && pip install --no-cache-dir {}
+        {}
 
     # Change to non-root user
     USER appuser
@@ -61,9 +68,9 @@ def python_execute(execute_code:str,install_pkg:list)->str:
         custom_context=False,
         encoding="utf-8"
     )
-
-    # for chunk in logs:
-    #     print(chunk.get('stream', ''))
+    if verbose:
+        for chunk in logs:
+            print(chunk.get('stream', ''))
 
     # Run a container
     container = client.containers.run(
@@ -79,7 +86,9 @@ def python_execute(execute_code:str,install_pkg:list)->str:
 
     # Output from container
     result = container.decode('utf-8')
-    #print(result)
+
+    if verbose:
+        print(result)
 
 
     # Step 1: Remove the image

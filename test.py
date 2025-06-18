@@ -66,7 +66,7 @@ def main():
 
 def gaia_benchmark_create():
     import json
-    with open("gaia_benchmark/gaia_benchmark.txt","r") as f:
+    with open("gaia_benchmark/gaia_benchmark_validation.txt","r") as f:
         lines = f.readlines()
 
     level_1 = []
@@ -76,8 +76,8 @@ def gaia_benchmark_create():
         task = json.loads(line)
         match task["Level"]:
             case 1:
-                print(f"Level 1 question is: {task['file_name']}")
-                #level_1.append(json.dumps(task))
+                #print(f"Level 1 question is: {task['file_name']}")
+                level_1.append(json.dumps(task))
             case 2:
                 #print(f"Level 2 question is: {task['file_name']}")
                 level_2.append(json.dumps(task))
@@ -87,20 +87,20 @@ def gaia_benchmark_create():
             case _:
                 print(f"Unknown Level question is: {task['file_name']}")
 
-    # with open("gaia_benchmark/level_1/tasks.txt","w") as f:
-    #     for task in level_1:
-    #         f.write(task)
-    #         f.write("\n")
+    with open("gaia_benchmark/validation/level_1/tasks.txt","w") as f:
+        for task in level_1:
+            f.write(task)
+            f.write("\n")
 
-    # with open("gaia_benchmark/level_2/tasks.txt","w") as f:
-    #     for task in level_2:
-    #         f.write(task)
-    #         f.write("\n")
+    with open("gaia_benchmark/validation/level_2/tasks.txt","w") as f:
+        for task in level_2:
+            f.write(task)
+            f.write("\n")
 
-    # with open("gaia_benchmark/level_3/tasks.txt","w") as f:
-    #     for task in level_3:
-    #         f.write(task)
-    #         f.write("\n")
+    with open("gaia_benchmark/validation/level_3/tasks.txt","w") as f:
+        for task in level_3:
+            f.write(task)
+            f.write("\n")
 
 def question():
     pass

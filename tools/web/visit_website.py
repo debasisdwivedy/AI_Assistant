@@ -4,25 +4,6 @@ from markdownify import markdownify
 from tools.file_ops.read_file import read_file
 
 def visit_website(url:str)->str:
-    """
-    Tool: Visit website to get the content
-
-        Name : visit_website
-
-        Description:
-            This tool is used to visit a website and get its content in markdown format.
-            The result return is of type string
-
-        Args:
-            url:str = The url of the site to visit.
-
-        Usage:
-            Call this tool if you need to get the content of a website.
-
-        Output:
-
-            result:str = The content of the website.
-    """
     try:
         import pylibmagic, magic
         mime = magic.Magic(mime=True)  # Get MIME type

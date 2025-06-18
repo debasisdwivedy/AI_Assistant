@@ -1,33 +1,14 @@
-import regex
+import regex,os,json
+
+import sys
+sys.path.append(os.getcwd())
+
 from utils.get_llm import get_llm
 from langchain_core.prompts import PromptTemplate
 from tools.web.visit_website import visit_website
+from Prompts import Prompts
 
-
-PROMPT="""
-        You are a helpful assistance.You are given the following:
-
-        Question: {question}
-        Title : {title}
-        Summary: {summary}
-        Content: {content}
-
-        Your task is to determine whether either the summary or the full content successfully answers the question.
-
-        Instructions:
-            1.	Evaluate if the summary or content provides a clear, direct, and factual answer to the question.
-            2.	If either the summary or content answers the question clearly, respond YES, and provide the answer explicitly.
-            3.	If neither the summary nor the content answers the question clearly, respond NO.
-
-        Your output format should be as below:
-
-        Answer: YES or NO
-        If YES, then:
-        Answer to the question: [Insert answer here]
-        """
-
-
-def web_search(query:str,max_results:int=20):
+def web_search(query:str,max_results:int=10,verbose:bool = False)->str:
     """
     Tool: Web Search
 
@@ -47,23 +28,39 @@ def web_search(query:str,max_results:int=20):
         Output:
             A dictionary of results as below:
 
-            result:str = {{'0': {{'URL': 'https://example.com','Content': 'This is a sample example'}},
-                        '1': {{'URL': 'https://xyz.com','Content': 'This is a sample example'}}
+            result:str = {{'<URL1>': <ANSWER1>,
+                        '<URL2>': <ANSWER2>,
                         }}
     
     """
-    __duck_duck_go_search__(query,max_results)
-    __google__search__(query,max_results)
 
-def __duck_duck_go_search__(query:str,max_results:int):
+    duck_duck_go_search_results={}
+    google_search_results = {}
+    try:
+        duck_duck_go_search_results = __duck_duck_go_search__(query,max_results,verbose)
+    except Exception as e:
+        print(f"Unable to search using Duck Duck GO {e}")
+    try:
+       google_search_results =  __google__search__(query,max_results,verbose)
+    except Exception as e:
+        print(f"Unable to search using Google Search {e}")
+    
+    final_result = duck_duck_go_search_results | google_search_results
+
+    if verbose:
+        print(final_result)
+
+    return json.dumps(final_result)
+
+def __duck_duck_go_search__(query:str,max_results:int,verbose:bool):
+    search_results = {}
     try:
         from duckduckgo_search import DDGS
         ddgs = DDGS(verify=False,timeout=5)
         llm = get_llm()
         results = ddgs.text(query, safesearch='off',max_results=max_results)
-        urls = []
         for result in results:
-            prompt_template = PromptTemplate.from_template(PROMPT)
+            prompt_template = PromptTemplate.from_template(Prompts.SEARCH_PROMPT.value)
             prompt = prompt_template.invoke(
                 {
                     "question": query,
@@ -80,45 +77,56 @@ def __duck_duck_go_search__(query:str,max_results:int):
                 match = regex.search(r'Answer to the question:\s*(.*)', resp.content,timeout=10)
                 if match:
                     answer = match.group(1)
-                    print("================================")
-                    print(result["href"])
-                    print("================================")
-                    print(answer)
+                    if verbose:
+                        print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
+                        print(result["href"])
+                        print("\n")
+                        print(answer)
+                        print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
+                    search_results[result["href"]]=answer
                 
-
     except ImportError as e:
         raise ImportError("You must install package `duckduckgo_search` to run this tool: for instance run `pip install duckduckgo-search`.") from e
     
+    return search_results
+    
 
-def __google__search__(query:str,max_results:int):
+def __google__search__(query:str,max_results:int,verbose:bool):
+    search_results = {}
     try:
         from googlesearch import search
+        llm = get_llm()
+        for result in search(query, num_results=max_results,unique=True,safe=None,advanced=True,ssl_verify=True):
+            prompt_template = PromptTemplate.from_template(Prompts.SEARCH_PROMPT.value)
+            prompt = prompt_template.invoke(
+                {
+                    "question": query,
+                    "title": result.title,
+                    "summary": result.description,
+                    "content": visit_website([result.url])
+
+                }
+                )
+            #print(prompt.to_messages())
+            resp = llm.invoke(prompt)
+            if "Answer: YES" in resp.content:
+                # Extract everything after 'Answer to the question:'
+                match = regex.search(r'Answer to the question:\s*(.*)', resp.content,timeout=10)
+                if match:
+                    answer = match.group(1)
+                    if verbose:
+                        print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
+                        print(result.url)
+                        print("\n")
+                        print(answer)
+                        print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
+                    search_results[result.url]=answer
     except ImportError as e:
         raise ImportError("You must install package `googlesearch-python` to run this tool: for instance run `pip install googlesearch-python`.") from e
-    llm = get_llm()
-    for result in search(query, num_results=max_results,unique=True,safe=None,advanced=True,ssl_verify=True):
-        prompt_template = PromptTemplate.from_template(PROMPT)
-        prompt = prompt_template.invoke(
-            {
-                "question": query,
-                "title": result.title,
-                "summary": result.description,
-                "content": visit_website([result.url])
-
-            }
-            )
-        #print(prompt.to_messages())
-        resp = llm.invoke(prompt)
-        if "Answer: YES" in resp.content:
-            # Extract everything after 'Answer to the question:'
-            match = regex.search(r'Answer to the question:\s*(.*)', resp.content,timeout=10)
-            if match:
-                answer = match.group(1)
-                print("================================")
-                print(result.url)
-                print("================================")
-                print(answer)
+    
+    return search_results
 
 
-# query = "What was the actual enrollment count of the clinical trial on H. pylori in acne vulgaris patients from Jan-May 2018 as listed on the NIH website?"
-# search(query,20)
+if __name__ == "__main__":
+    query = "Pain in the neck crossword clue"
+    web_search(query,20)
