@@ -152,7 +152,16 @@ if __name__=="__main__":
     args = parser.parse_args()
     VERBOSE = args.verbose
     #task = args.task
-    task = '''
-            Of the authors (First M. Last) that worked on the paper \"Pie Menus or Linear Menus, Which Is Better?\" in 2015, what was the title of the first paper authored by the one that had authored prior papers?
+
+    task_with_file = '''
+            You must answer questions using the information provided in the following file.
+
+            File_Name: f918266a-b3e0-4914-865d-4faa564f1aef.py
+            Question: What is the final numeric output from the attached Python code?
             '''
+
+    task =  r'''
+        What is the first name of the only Malko Competition recipient from the 20th Century (after 1977) whose nationality on record is a country that no longer exists?
+        '''
+
     main(task,verbose=VERBOSE)

@@ -36,10 +36,10 @@ def get_plan(task:str,messages:list)->str:
             return formatted_content
         except JSONDecodeError as e:
             #raise ValueError("Unable to generate plan") from e
-            return f"{'1':{'STATUS': 'NOT ABLE TO GENERATE A PLAN. GOT INVALID JSON AS RESPONSE.'}}"
+            return '{"1":{"STATUS": "NOT ABLE TO GENERATE A PLAN. PLEASE TRY AGAIN LATER!!!"}}'
     else:
         print("Invalid JSON")
-        return f"{'1':{'STATUS': 'NOT ABLE TO GENERATE A PLAN. PLEASE TRY AGAIN LATER!!!'}}"
+        return '{"1":{"STATUS": "NOT ABLE TO GENERATE A PLAN. PLEASE TRY AGAIN LATER!!!"}}'
     
 
 def plan_status(task:str,plan:str)->str:

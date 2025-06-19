@@ -79,10 +79,23 @@ class Prompts(Enum):
         Output:
 
             result:str = The result from the function call
+
+    e) Tool: NONE
+
+        Name : NONE
+
+        Description:
+            This tool does not use any external process/tool. It analyzes the question and Step-By-Step REASONS through the approach to provide an ANSWER. 
+
+        Args: NONE
+
+        Usage:
+            Use it when you can apply logic and reasoning to solve a problem.
+
+        Output:
+            
+            result:str = The result from the reasoning step
     """
-
-
-
 
 
 
@@ -113,7 +126,7 @@ class Prompts(Enum):
             }}
     }}
             
-    The plan would be executed one step at a time. You have access to tools below:
+    The plan would be executed one step at a time. You have access to tools (OPTIONAL) below:
 
     {tools}    
 
@@ -134,8 +147,8 @@ class Prompts(Enum):
 
     
     PLAN_VALIDATION_PROMPT = """
-        You are a plan verifier. Given below is a PLAN to perform a TASK using TOOLS.Verify if the plan is Valid or Invalid.
-        The tools and it's description is as below:
+        You are a plan verifier. Given below is a PLAN to perform a TASK using TOOLS (OPTIONAL).Verify if the plan is Valid or Invalid.
+        The tools and it's description are as below:
 
         {tools}
 
@@ -178,13 +191,15 @@ class Prompts(Enum):
     
     
     PLAN_EXECUTOR_PROMPT = """
-    You are an general AI assistant tasked performing some pre-defined action using the tools defined. Follow each step below carefully. For every step:
-	1.	Read the PLAN provided.
-	2.	Use the specified tool with the argument.
-	3.	Ensure the answer fits the PLANS expected style.
+    You are an general AI assistant tasked to perform a pre-defined TASK using the TOOLS defined. Follow each step below carefully. For every step:
+	1.Read the PLAN provided.
+	2.Use the specified tool with the argument.
+	3.Ensure the answer fits the PLANS expected style. 
 
+    If the PLAN DOES NOT provide you with an answer:
+    Analyze the question and Step-By-Step REASON through the approach to provide an ANSWER.
 
-    FINISH your answer with the following template: 
+    FINISH your answer with the following template ONLY: 
     FINAL ANSWER: [YOUR FINAL ANSWER]. 
     
     YOUR FINAL ANSWER should be a number OR as few words as possible OR a comma separated list of numbers and/or strings. 

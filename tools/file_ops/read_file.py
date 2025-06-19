@@ -1,3 +1,6 @@
+from unstructured.partition.common import UnsupportedFileFormatError
+import os
+
 def read_file(file_path:str)->str:
     """
     Tool: File reader to read files of any type
@@ -19,6 +22,7 @@ def read_file(file_path:str)->str:
             result:str = The result from the function call
     """
     filename=file_path
+    text_extensions = ["py","c","java","cs","php","swift","vb","sql","html","htm","txt","md"]
     if file_path.startswith("http"):
         import requests
         response = requests.get(file_path)
@@ -26,14 +30,28 @@ def read_file(file_path:str)->str:
         content = response.content
         filename=__download_file__(content)
     
-    # loader = __load_file__(filename)
-    # elements = loader.partition()
-    # for element in elements:
-    #     print(element.id)
-    #     print(element.category)
-    #     print(element.metadata)
-    #     print(element.text)
-    #     break
+    file_ext = filename.split(os.sep)[-1].split(".")[-1]
+    if file_ext in text_extensions:
+        with open(f"tools/file_ops/temp/{filename}") as f:
+            content = f.read()
+        #print(content)
+        return content
+    else:
+        loader = __load_file__(filename)
+        content = []
+        if loader:
+            elements = loader.partition()
+            #print(len(elements))
+            for element in elements:
+                # print(element.id)
+                # print(element.category)
+                # print(element.metadata)
+                # print(element.text)
+                #break
+                content.append(element.text)
+        #s = " ".join(content)
+        #print(s)
+        return " ".join(content)
     
 
 def __get_file_type_from_binary__(binary_data):
@@ -143,83 +161,170 @@ def __load_file__(filename):
     ext_lower = ext.lower()
     match ext_lower:
         case ".pdf":
-            from readers.pdf_loader import pdf_loader
-            loader = pdf_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.pdf_loader import pdf_loader
+                loader = pdf_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".doc":
-            from readers.doc_loader import doc_loader
-            loader = doc_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.doc_loader import doc_loader
+                loader = doc_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".docx":
-            from readers.docx_loader import docx_loader
-            loader = docx_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.docx_loader import docx_loader
+                loader = docx_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".eml":
-            from readers.email_loader import email_loader
-            loader = email_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.email_loader import email_loader
+                loader = email_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".epub":
-            from readers.epub_loader import epub_loader
-            loader = epub_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.epub_loader import epub_loader
+                loader = epub_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".xls":
-            from readers.excel_loader import excel_loader
-            loader = excel_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.excel_loader import excel_loader
+                loader = excel_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".xlsx":
-            from readers.excel_loader import excel_loader
-            loader = excel_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.excel_loader import excel_loader
+                loader = excel_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".msg":
-            from readers.message_loader import message_loader
-            loader = message_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.message_loader import message_loader
+                loader = message_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".odt":
-            from readers.open_office_loader import open_office_loader
-            loader = open_office_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.open_office_loader import open_office_loader
+                loader = open_office_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".ppt":
-            from readers.ppt_loader import ppt_loader
-            loader = ppt_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.ppt_loader import ppt_loader
+                loader = ppt_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".pptx":
-            from readers.pptx_loader import pptx_loader
-            loader = pptx_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.pptx_loader import pptx_loader
+                loader = pptx_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".rtf":
-            from readers.rtf_loader import rtf_loader
-            loader = rtf_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.rtf_loader import rtf_loader
+                loader = rtf_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".xml":
-            from readers.xml_loader import xml_loader
-            loader = xml_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.xml_loader import xml_loader
+                loader = xml_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".html":
-            from readers.html_loader import html_loader
-            loader = html_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.html_loader import html_loader
+                loader = html_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".jpeg" | ".jpg" | ".png" | ".gif" | ".svg" | ".bmp" | ".webp" | ".tiff" | ".tif":
-            from readers.image_loader import image_loader
-            loader = image_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from readers.image_loader import image_loader
+                loader = image_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".csv":
-            from readers.csv_loader import csv_loader
-            loader = csv_loader(f"tools/file_ops/temp/{filename}")
-        case ".txt":
-            from readers.text_loader import text_loader
-            loader = text_loader(f"tools/file_ops/temp/{filename}")
-        case ".md":
-            from readers.markdown_loader import markdown_loader
-            loader = markdown_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.csv_loader import csv_loader
+                loader = csv_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
+        # case ".txt":
+        #     try:
+        #         from tools.file_ops.readers.text_loader import text_loader
+        #         loader = text_loader(f"tools/file_ops/temp/{filename}")
+        #     except Exception as e:
+        #         print(f"Unable to read the file {filename}")
+
+        # case ".md":
+        #     try:
+        #         from tools.file_ops.readers.markdown_loader import markdown_loader
+        #         loader = markdown_loader(f"tools/file_ops/temp/{filename}")
+        #     except Exception as e:
+        #         print(f"Unable to read the file {filename}")
+
         case ".rst":
-            from readers.rst_loader import rst_loader
-            loader = rst_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.rst_loader import rst_loader
+                loader = rst_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".org":
-            from readers.org_loader import org_loader
-            loader = org_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.org_loader import org_loader
+                loader = org_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case ".tsv":
-            from readers.tsv_loader import tsv_loader
-            loader = tsv_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.tsv_loader import tsv_loader
+                loader = tsv_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
+
         case _:
-            from readers.anonymous_file_loader import anonymous_file_loader
-            loader = anonymous_file_loader(f"tools/file_ops/temp/{filename}")
+            try:
+                from tools.file_ops.readers.anonymous_file_loader import anonymous_file_loader
+                loader = anonymous_file_loader(f"tools/file_ops/temp/{filename}")
+            except UnsupportedFileFormatError as e:
+                print(f"Unable to read the file {filename}")
 
     return loader
 
 
 
+if __name__ == "__main__":
+    # Dataset_Philosophy_Ethics_Morality.csv
+    # 1745745409584.pdf - ISSUE (NUMPY)
+    # 2501.19393v3.pdf - ISSUE (NUMPY)
+    # Prudential_OTP_demo_Results.xlsx
+    # Hugging _Face_Certificate.webp
+    # 1707100541036.jpeg - ISSUE (NUMPY)
+    # Best_of_Bali_2023.pptx
 
-# Dataset_Philosophy_Ethics_Morality.csv
-# 1745745409584.pdf - ISSUE (NUMPY)
-# 2501.19393v3.pdf - ISSUE (NUMPY)
-# Prudential_OTP_demo_Results.xlsx
-# Hugging _Face_Certificate.webp
-# 1707100541036.jpeg - ISSUE (NUMPY)
-# Best_of_Bali_2023.pptx
-
-# read_file("")
+    read_file("f918266a-b3e0-4914-865d-4faa564f1aef.py")
