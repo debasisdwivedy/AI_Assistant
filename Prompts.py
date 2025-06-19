@@ -153,7 +153,7 @@ class Prompts(Enum):
     
 
 
-    SEARCH_PROMPT="""
+    VERIFY_SEARCH_PROMPT="""
         You are a helpful assistance.You are given the following:
 
         Question: {question}

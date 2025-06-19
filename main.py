@@ -79,11 +79,14 @@ def plan_executor(state:State):
                 print(plan[step])
                 print("=========================")
 
+            print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
             
             state["plan"]="""
-        ===================PLAN TO BE EXCUTED IN THE STEPS BELOW===================================
-        {PLAN}
-        """.format(PLAN=plan_str)
+                ===================PLAN TO BE EXCUTED IN THE STEPS BELOW===================================
+                        {PLAN}
+                """.format(PLAN=plan_str)
+            
         state["messages"]=add_messages(state["messages"],[SystemMessage(content=Prompts.PLAN_EXECUTOR_PROMPT)])
         state["messages"]=add_messages(state["messages"],[HumanMessage(content=state["query"])])
         state["messages"]=add_messages(state["messages"],[AIMessage(content=state["plan"])])
@@ -150,6 +153,6 @@ if __name__=="__main__":
     VERBOSE = args.verbose
     #task = args.task
     task = '''
-            In Emily Midkiff's June 2014 article in a journal named for the one of Hreidmar's sons that guarded his house, what word was quoted from two different authors in distaste for the nature of dragon depictions?
+            Of the authors (First M. Last) that worked on the paper \"Pie Menus or Linear Menus, Which Is Better?\" in 2015, what was the title of the first paper authored by the one that had authored prior papers?
             '''
     main(task,verbose=VERBOSE)

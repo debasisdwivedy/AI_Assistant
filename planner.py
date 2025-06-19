@@ -1,5 +1,7 @@
-from langchain_core.prompts import PromptTemplate
 import json
+from json.decoder import JSONDecodeError
+
+from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage, AnyMessage
 
 from utils.get_llm import get_llm
@@ -32,12 +34,12 @@ def get_plan(task:str,messages:list)->str:
         try:
             plan = json.loads(formatted_content)
             return formatted_content
-        except Exception as e:
+        except JSONDecodeError as e:
             #raise ValueError("Unable to generate plan") from e
-            return f"'1':{'STATUS': 'NOT ABLE TO GENERATE A PLAN. GOT INVALID JSON AS RESPONSE. {e}'}"
+            return f"{'1':{'STATUS': 'NOT ABLE TO GENERATE A PLAN. GOT INVALID JSON AS RESPONSE.'}}"
     else:
         print("Invalid JSON")
-        return f"'1':{'STATUS': 'NOT ABLE TO GENERATE A PLAN. PLEASE TRY AGAIN LATER!!!'}"
+        return f"{'1':{'STATUS': 'NOT ABLE TO GENERATE A PLAN. PLEASE TRY AGAIN LATER!!!'}}"
     
 
 def plan_status(task:str,plan:str)->str:
