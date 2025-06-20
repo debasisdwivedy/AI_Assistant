@@ -1,9 +1,20 @@
-from unstructured.partition.common import UnsupportedFileFormatError
-import os
+import os,sys
+sys.path.append(os.getcwd())
 
-def read_file(file_path:str)->str:
+from langchain_core.prompts import PromptTemplate
+from Prompts import Prompts
+
+from unstructured.partition.common import UnsupportedFileFormatError
+from utils.get_llm import get_llm
+from utils.get_embeddings import get_embedding
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage, AnyMessage
+from langchain.schema import Document
+from langchain.text_splitter import CharacterTextSplitter,TokenTextSplitter, RecursiveCharacterTextSplitter,SpacyTextSplitter
+from langchain_chroma import Chroma
+
+def read_file(file_path:str,query:str=None)->str:
     """
-    Tool: File reader to read files of any type
+    Tool: File reader to read files of ANY TYPE
 
         Name : read_file
 
@@ -13,6 +24,7 @@ def read_file(file_path:str)->str:
 
         Args:
             file_path:str = The name/path/url of the file to be read.
+            query:str = Question that needs to be answer from the file.Make the query EXTREMLY DETAILED, SELF EXPLANATORY and WITHOUT AMBIGUITY.
 
         Usage:
             Call this tool if you want to read a file present in local or a URL to the file.
@@ -22,7 +34,10 @@ def read_file(file_path:str)->str:
             result:str = The result from the function call
     """
     filename=file_path
-    text_extensions = ["py","c","java","cs","php","swift","vb","sql","html","htm","txt","md"]
+    root, ext = os.path.splitext(filename)
+    text_extensions = [".py",".c",".java",".cs",".php",".swift",".vb",".sql",".html",".htm",".txt",".md",".pdb"]
+    image_extension = [".jpeg",".jpg",".png",".gif",".svg",".bmp",".webp",".tiff",".tif"]
+
     if file_path.startswith("http"):
         import requests
         response = requests.get(file_path)
@@ -30,32 +45,68 @@ def read_file(file_path:str)->str:
         content = response.content
         filename=__download_file__(content)
     
-    file_ext = filename.split(os.sep)[-1].split(".")[-1]
-    if file_ext in text_extensions:
-        with open(f"tools/file_ops/temp/{filename}") as f:
+    if ext in text_extensions:
+        with open(f"tools/file_ops/temp/{filename}","r") as f:
             content = f.read()
         #print(content)
-        return content
+        if len(content) > 10000 and ext in [".html",".htm",".txt",".md",".pdb"]:
+            return __most_relevant_sections__(content,query)
+        else:
+            return content
+    elif ext in image_extension:
+        # Load image and convert to base64
+        import base64
+        with open(f"tools/file_ops/temp/{filename}", "rb") as img:
+            base64_image = base64.b64encode(img.read()).decode("utf-8")
+
+        prompt_template = PromptTemplate.from_template(Prompts.READ_IMAGE_PROMPT.value)
+        prompt = prompt_template.invoke({
+            "question": query
+        })
+        
+        messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": str(prompt)},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_image}"
+                    },
+                },
+            ],
+        }
+    ]
+        llm = get_llm()
+        resp = llm.invoke(messages)
+        return resp.content
     else:
         loader = __load_file__(filename)
         content = []
         if loader:
-            elements = loader.partition()
-            #print(len(elements))
-            for element in elements:
-                # print(element.id)
-                # print(element.category)
-                # print(element.metadata)
-                # print(element.text)
-                #break
-                content.append(element.text)
-        #s = " ".join(content)
+            try:
+                elements = loader.partition()
+                #print(len(elements))
+                for element in elements:
+                    # print(element.id)
+                    # print(element.category)
+                    # print(element.metadata)
+                    # print(element.text)
+                    #break
+                    content.append(element.text)
+            except Exception as e:
+                print(f"Unable to partition file {filename} using Unstructured!!!")
+        s = " ".join(content)
         #print(s)
-        return " ".join(content)
+        if len(s) < 10000:
+            return s
+        else:
+            return __most_relevant_sections__(content,query)
     
 
 def __get_file_type_from_binary__(binary_data):
-    import pylibmagic, magic
+    import magic
     mime = magic.Magic(mime=True)  # Get MIME type
     file_type = mime.from_buffer(binary_data)
     return file_type
@@ -260,7 +311,7 @@ def __load_file__(filename):
 
         case ".jpeg" | ".jpg" | ".png" | ".gif" | ".svg" | ".bmp" | ".webp" | ".tiff" | ".tif":
             try:
-                from readers.image_loader import image_loader
+                from tools.file_ops.readers.image_loader import image_loader
                 loader = image_loader(f"tools/file_ops/temp/{filename}")
             except Exception as e:
                 print(f"Unable to read the file {filename}")
@@ -279,12 +330,12 @@ def __load_file__(filename):
         #     except Exception as e:
         #         print(f"Unable to read the file {filename}")
 
-        # case ".md":
-        #     try:
-        #         from tools.file_ops.readers.markdown_loader import markdown_loader
-        #         loader = markdown_loader(f"tools/file_ops/temp/{filename}")
-        #     except Exception as e:
-        #         print(f"Unable to read the file {filename}")
+        case ".md":
+            try:
+                from tools.file_ops.readers.markdown_loader import markdown_loader
+                loader = markdown_loader(f"tools/file_ops/temp/{filename}")
+            except Exception as e:
+                print(f"Unable to read the file {filename}")
 
         case ".rst":
             try:
@@ -316,7 +367,36 @@ def __load_file__(filename):
 
     return loader
 
+def __most_relevant_sections__(content:str,query:str,k:int=5,content_max_size:int=1000000):
+    print("=============================VECTOR SERACH FOR LARGE FILE=========================")
+    most_relevant_content =[]
 
+    # Split into chunks
+    text_splitter = CharacterTextSplitter(chunk_size=5000, chunk_overlap=100)
+    token_splitter =  TokenTextSplitter(chunk_size=5000, chunk_overlap=100)
+    recursive_text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=100)
+    spacy_text_splitter = SpacyTextSplitter(pipeline="en_core_web_sm", chunk_size=5000, chunk_overlap=100)
+
+
+    texts = token_splitter.split_text(content[:content_max_size])
+
+    # Create embedding model
+    embedding = get_embedding()
+
+    # Create Chroma DB from documents
+    vectorstore = Chroma.from_texts(texts, embedding)
+
+    # Perform similarity search
+    results = vectorstore.similarity_search(query, k=k)
+    for result in results:
+        # print("++++++++++++++++++++++++++++++++++++++++++++")
+        # print(result.page_content)
+        # print("++++++++++++++++++++++++++++++++++++++++++++")
+        most_relevant_content.append(result.page_content)
+    
+    #print("\n\n".join(most_relevant_content))
+    print("======================================================")
+    return "\n\n".join(most_relevant_content)
 
 if __name__ == "__main__":
     # Dataset_Philosophy_Ethics_Morality.csv
@@ -327,4 +407,4 @@ if __name__ == "__main__":
     # 1707100541036.jpeg - ISSUE (NUMPY)
     # Best_of_Bali_2023.pptx
 
-    read_file("f918266a-b3e0-4914-865d-4faa564f1aef.py")
+    read_file("Sherlock_Holmes_Canon.txt","Who was sherlock holmes best friend?")

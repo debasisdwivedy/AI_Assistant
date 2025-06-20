@@ -1,5 +1,5 @@
 from typing import Literal
-from PIL import Image
+#from PIL import Image
 import io,json
 from dotenv import load_dotenv
 from argparse import ArgumentParser
@@ -155,13 +155,14 @@ if __name__=="__main__":
 
     task_with_file = '''
             You must answer questions using the information provided in the following file.
+            ALWAYS use read_file TOOL to get information about the file.
 
-            File_Name: f918266a-b3e0-4914-865d-4faa564f1aef.py
-            Question: What is the final numeric output from the attached Python code?
+            File_Name: poem.txt
+            Question: what is the number of the stanza in which some lines are indented?
             '''
 
     task =  r'''
-        What is the first name of the only Malko Competition recipient from the 20th Century (after 1977) whose nationality on record is a country that no longer exists?
+        In Audre Lorde's poem "Father Son and Holy Ghost", what is the number of the stanza in which some lines are indented?
         '''
 
     main(task,verbose=VERBOSE)

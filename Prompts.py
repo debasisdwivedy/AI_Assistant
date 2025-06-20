@@ -43,7 +43,7 @@ class Prompts(Enum):
             
             result:str = The result from the function call
 
-    c) Tool: File reader to read files of any type
+    c) Tool: File reader to read files of ANY TYPE
 
         Name : read_file
 
@@ -53,6 +53,7 @@ class Prompts(Enum):
 
         Args:
             file_path:str = The name/path/url of the file to be read.
+            query:str = Question that needs to be answer from the file. Make the query extremly DETAILED, SELF EXPLANATORY and WITHOUT AMBIGUITY.
 
         Usage:
             Call this tool if you want to read a file present in local or a URL to the file.
@@ -85,7 +86,7 @@ class Prompts(Enum):
         Name : NONE
 
         Description:
-            This tool does not use any external process/tool. It analyzes the question and Step-By-Step REASONS through the approach to provide an ANSWER. 
+            This tool does not use any external process/tool. It analyzes the question and Step-By-Step REASON through the approach to provide an ANSWER. 
 
         Args: NONE
 
@@ -174,7 +175,7 @@ class Prompts(Enum):
         Summary: {summary}
         Content: {content}
 
-        Your task is to determine whether either the summary or the full content successfully answers the question.
+        Your task is to determine whether either the Summary or the Content can successfully answers the question.
 
         Instructions:
             1.	Evaluate if the summary or content provides a clear, direct, and factual answer to the question.
@@ -184,6 +185,7 @@ class Prompts(Enum):
         Your output format should be as below:
 
         Answer: YES or NO
+        Reasoning: <The Reason for your decision>
         If YES, then:
         Answer to the question: [Insert answer here]
         """
@@ -206,4 +208,20 @@ class Prompts(Enum):
     a) If you are asked for a number, don't use comma to write your number neither use units such as $ or percent sign unless specified otherwise. 
     b) If you are asked for a string, don't use articles, neither abbreviations (e.g. for cities), and write the digits in plain text unless specified otherwise. 
     c) If you are asked for a comma separated list, apply the above rules depending of whether the element to be put in the list is a number or a string.
+    """
+
+
+
+    READ_IMAGE_PROMPT = """
+    Given is a IMAGE in BASE-64 FORMAT.
+    ANSWER the QUESTION related to the IMAGE.
+    Provide a Step-By-Step REASONING and ANALYSIS.
+    
+    Question: {question}
+
+    Your output format should be as below:
+
+    Reasoning: <WHY THE ANSWER IS VALID>
+    Answer: [Insert answer here]
+
     """

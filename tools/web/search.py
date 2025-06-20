@@ -33,7 +33,6 @@ def web_search(query:str,max_results:int=10,verbose:bool = True,retry:int = 5,do
                         }}
     
     """
-
     duck_duck_go_search_results={}
     google_search_results = {}
     while retry>0:
@@ -60,6 +59,7 @@ def web_search(query:str,max_results:int=10,verbose:bool = True,retry:int = 5,do
         print(final_result)
     
     if final_result and len(final_result)>0:
+        del final_result["STATUS"]
         return json.dumps(final_result)
     else:
         return {"STATUS" :"Unable to perform search right now.Please try later!!!!"}
@@ -71,6 +71,7 @@ def __duck_duck_go_search__(query:str,max_results:int,verbose:bool,download_web_
         ddgs = DDGS(verify=False,timeout=5)
         llm = get_llm()
         results = ddgs.text(query, safesearch='off',max_results=max_results)
+        search_results["STATUS"] = "SEARCH PERFORMED"
         for result in results:
             prompt_template = PromptTemplate.from_template(Prompts.VERIFY_SEARCH_PROMPT.value)
             prompt = prompt_template.invoke(
@@ -78,11 +79,10 @@ def __duck_duck_go_search__(query:str,max_results:int,verbose:bool,download_web_
                     "question": query,
                     "title": result["title"],
                     "summary": result["body"],
-                    "content": visit_website([result["href"]],download_web_files=download_web_files)
+                    "content": visit_website(result["href"],download_web_files=download_web_files)
 
                 }
                 )
-            #print(prompt.to_messages())
             resp = llm.invoke(prompt)
             if "Answer: YES" in resp.content:
                 # Extract everything after 'Answer to the question:'
@@ -111,13 +111,14 @@ def __google__search__(query:str,max_results:int,verbose:bool,download_web_files
         from googlesearch import search
         llm = get_llm()
         for result in search(query, num_results=max_results,unique=True,safe=None,advanced=True,ssl_verify=True):
+            search_results["STATUS"] = "SEARCH PERFORMED"
             prompt_template = PromptTemplate.from_template(Prompts.VERIFY_SEARCH_PROMPT.value)
             prompt = prompt_template.invoke(
                 {
                     "question": query,
                     "title": result.title,
                     "summary": result.description,
-                    "content": visit_website([result.url],download_web_files=download_web_files)
+                    "content": visit_website(result.url,download_web_files=download_web_files)
 
                 }
                 )
@@ -159,13 +160,14 @@ def __brave__search__(query:str,max_results:int,verbose:bool,download_web_files:
         "count": max_results  # Number of results
     }
 
-    response = requests.get(url, headers=headers, params=params)
+    response = requests.get(url, headers=headers, params=params, timeout=5)
 
     if response.status_code == 200:
         results = response.json()
         try:
             llm = get_llm()
             for result in results.get("web", {}).get("results", []):
+                search_results["STATUS"] = "SEARCH PERFORMED"
                 prompt_template = PromptTemplate.from_template(Prompts.VERIFY_SEARCH_PROMPT.value)
                 prompt = prompt_template.invoke(
                     {
@@ -199,6 +201,6 @@ def __brave__search__(query:str,max_results:int,verbose:bool,download_web_files:
 
 
 if __name__ == "__main__":
-    query = "DDC 633 catalog Bielefeld University Library BASE 2020 articles list"
+    query = 'Audre Lorde Father Son and Holy Ghost full text'
     #unknown language article unique flag DDC 633 Bielefeld University 2020
-    web_search(query,20)
+    web_search(query,10)
