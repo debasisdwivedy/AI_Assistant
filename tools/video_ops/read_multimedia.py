@@ -1,33 +1,51 @@
-import yt_dlp
+import yt_dlp,uuid,os
 
-def read_video(url:str)->str:
+import sys
+sys.path.append(os.getcwd())
+
+from utils.audio_transcribe import get_transcript
+
+def read_multimedia(url:str,audio_only:bool=True)->str:
     """
     Tool: Audio/Video reader to read audio/video files
 
-        Name : read_video
+        Name : read_multimedia
 
         Description:
             This tool is used to read audio/video files like (mp3,mp4,MOV etc) of different format.
             The result return is of type string
 
         Args:
-            url:str = The url of the video file.
+            url:str = The url/filename of the video file.
+            audio_only:bool = Set as True if only Audio file is required for the task, else Set as False
 
         Usage:
             Call this tool if you want to get the content of a audio/video file from a URL.
 
         Output:
 
-            result:str = The result from the function call
+            result:str = The transcriptions of the media file.
     """
-    __get_metadata__(url)
-    #__download_video__(url)
-    __download_audio__(url)
 
-def __download_video__(url:str):
+    if url.startswith("http"):
+        filename = str(uuid.uuid4())
+        #__get_metadata__(url)
+        if audio_only:
+            __download_audio__(url,filename)
+        else:
+            __download_video__(url,filename)
+    else:
+        filename = url
+
+    # Get the text
+    transcript_text = get_transcript(filename)
+    #print(transcript_text)
+    return transcript_text
+
+def __download_video__(url:str,filename:str):
     ydl_opts = {
         'format': 'bestvideo+bestaudio/best',
-        'outtmpl': 'tools/video_ops/temp/%(title)s.%(ext)s',
+        'outtmpl': f'tools/video_ops/temp/{filename}',
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -35,7 +53,7 @@ def __download_video__(url:str):
 
     print("Video downloaded with yt-dlp!")
 
-def __download_audio__(url:str):
+def __download_audio__(url:str,filename:str):
     ######### COVERT TO MP3 (Requires ffmpeg installed.) #######################
     ydl_opts = {
     'format': 'bestaudio/best',
@@ -44,7 +62,7 @@ def __download_audio__(url:str):
         'preferredcodec': 'mp3',
         'preferredquality': '192',
     }],
-    'outtmpl': 'tools/video_ops/temp/%(title)s.%(ext)s',
+    'outtmpl': f'tools/video_ops/temp/{filename}',
     }
     ##############################################################################
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -56,4 +74,5 @@ def __get_metadata__(url:str):
         print(info_dict.keys())  # Show available metadata fields
 
 
-# read_video("https://www.youtube.com/watch?v=WS3ywmABNm4")
+if __name__ == "__main__":
+    read_multimedia("99c9cc74-fdc8-46c6-8f8d-3ce2d3bfeea3.mp3")

@@ -16,7 +16,7 @@ from langchain.tools import Tool
 from tools.code.code_agent import python_execute
 from tools.web.search import web_search
 from tools.file_ops.read_file import read_file
-from tools.video_ops.read_video import read_video
+from tools.video_ops.read_multimedia import read_multimedia
 
 from utils.get_llm import get_llm
 from planner import get_plan,plan_status
@@ -93,7 +93,7 @@ def plan_executor(state:State):
         state["execution_status"] = True
         state["query"]=""
 
-    llm_with_tools = llm.bind_tools([web_search,python_execute,read_file,read_video])
+    llm_with_tools = llm.bind_tools([web_search,python_execute,read_file,read_multimedia])
     resp = llm_with_tools.invoke(state["messages"])
     # print("============RESPONSE=======================")
     # print(resp)
@@ -104,7 +104,7 @@ def main(task:str,verbose=False):
     builder = StateGraph(State)
     builder.add_node("planner",planner)
     builder.add_node("plan_executor",plan_executor)
-    builder.add_node("tools", ToolNode([web_search,python_execute,read_file,read_video]))
+    builder.add_node("tools", ToolNode([web_search,python_execute,read_file,read_multimedia]))
 
     builder.add_edge(
         START,
@@ -155,14 +155,17 @@ if __name__=="__main__":
 
     task_with_file = '''
             You must answer questions using the information provided in the following file.
-            ALWAYS use read_file TOOL to get information about the file.
+            ALWAYS use the TOOL below to get information about the file:
 
-            File_Name: poem.txt
-            Question: what is the number of the stanza in which some lines are indented?
+            a) read_file : To read content of a document
+            b) read_multimedia : To read content of a multimedia file
+
+            File_Name: 1f975693-876d-457b-a649-393859e79bf3.mp3
+            Question: Hi, I was out sick from my classes on Friday, so I'm trying to figure out what I need to study for my Calculus mid-term next week. My friend from class sent me an audio recording of Professor Willowbrook giving out the recommended reading for the test, but my headphones are broken :(\n\nCould you please listen to the recording for me and tell me the page numbers I'm supposed to go over? I've attached a file called Homework.mp3 that has the recording. Please provide just the page numbers as a comma-delimited list. And please provide the list in ascending order.
             '''
 
     task =  r'''
-        In Audre Lorde's poem "Father Son and Holy Ghost", what is the number of the stanza in which some lines are indented?
+        On the BBC Earth YouTube video of the Top 5 Silliest Animal Moments, what species of bird is featured?
         '''
 
     main(task,verbose=VERBOSE)

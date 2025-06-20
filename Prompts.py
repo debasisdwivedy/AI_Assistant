@@ -65,21 +65,22 @@ class Prompts(Enum):
 
     d) Tool: Audio/Video reader to read audio/video files
 
-        Name : read_video
+        Name : read_multimedia
 
         Description:
             This tool is used to read audio/video files like (mp3,mp4,MOV etc) of different format.
             The result return is of type string
 
         Args:
-            url:str = The url of the video file.
+            url:str = The url/filename of the video file.
+            audio_only:bool = Set as True if only Audio file is required for the task, else Set as False
 
         Usage:
             Call this tool if you want to get the content of a audio/video file from a URL.
 
         Output:
 
-            result:str = The result from the function call
+            result:str = The transcriptions of the multimedia file.
 
     e) Tool: NONE
 
